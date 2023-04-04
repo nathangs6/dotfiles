@@ -1,0 +1,9 @@
+#!/bin/bash
+if [[ $1 = *".c" ]]; then
+    efilename=${1::-2}
+    gcc -o $efilename $1
+    ./$efilename
+    rm $efilename
+else
+    echo "Need to provide a .c file!"
+fi

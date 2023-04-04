@@ -1,0 +1,338 @@
+global !p
+### Context Definitions ###
+def math():
+	return vim.eval('vimtex#syntax#in_mathzone()') == '1'
+
+def comment():
+	return vim.eval('vimtex#syntax#in_comment()') == '1'
+
+def env(name):
+	[x,y] = vim.eval("vimtex#env#is_inside('" + name + "')")
+	return x != '0' and x != '0'
+
+### Special Functions ###
+def fix_indent(snip):
+	# Can be called to remove extra tabs that vimtex adds
+	# Source: https://github.com/SirVer/ultisnips/issues/913
+	vim.eval('feedkeys("\<c-f>")')
+
+def find_env_start(name):
+	[row,col] = vim.eval("searchpairpos('\\\\begin{" + name + "}','','\\\\end{" + name + "}','bnWz')")
+	return row
+
+def expand_row(name):
+	row = find_env_start(name)
+	if row != 0:
+		vim.command(str(row) + 'yank k')
+		line = vim.eval("getreg('k')")
+		num_cols = 0
+		for c in ['c','l','r']:
+			num_cols += line[line.rfind('{'):].count(c)
+		snipline = ""
+		for i in range(1, num_cols + 1):
+			snipline = snipline + "$" + str(i) + " & "
+		snipline = snipline[:-2] + "\\\\\\"
+		snip.expand_anon(snipline)
+endglobal
+
+### Section snippets ###
+snippet beg "\begin{} / \end{}" bA
+\begin{$1}
+	$0
+\end{$1}
+endsnippet
+
+snippet sec "Section" bA
+\section{$1}
+$0
+endsnippet
+
+snippet usec "Unnumbered Section" bA
+\section*{$1}
+$0
+endsnippet
+
+snippet ssec "Subsection" bA
+\subsection{$1}
+$0
+endsnippet
+
+snippet ussec "Unnumbered Subsection" bA
+\subsection*{$1}
+$0
+endsnippet
+
+snippet sssec "Subsubsection" bA
+\subsubsection{$1}
+$0
+endsnippet
+
+snippet usssec "Unnumbered Subsubsection" bA
+\subsubsection*{$1}
+$0
+endsnippet
+
+### List snippets ###
+snippet ;it "Itemize Env" bA
+\begin{itemize}
+	\item $1
+\end{itemize}
+$0
+endsnippet
+
+snippet ;en "Enumerate Env" bA
+\begin{enumerate}
+	\item $1
+\end{enumerate}
+$0
+endsnippet
+
+context "env('itemize')"
+post_expand "fix_indent(snip)"
+snippet ; "New itemize item" bA
+\item $0
+endsnippet
+
+context "env('enumerate')"
+post_expand "fix_indent(snip)"
+snippet ; "New enumerate item" bA
+\item $0
+endsnippet
+
+### Table Snippets ###
+snippet ;ta "Tabular" bA
+\begin{tabular}{${1:|c|c c|c|}}
+	$0
+\end{tabular}
+endsnippet
+
+context "env('tabular')"
+post_jump "expand_row('tabular') 
+snippet ; "New table row" bA
+
+endsnippet
+
+### Text Modifiers ###
+snippet it "Italics"
+\textit{$1} $0
+endsnippet
+
+snippet bf "Bold"
+\textbf{$1} $0
+endsnippet
+
+### Math Text Modifiers ###
+context "math()"
+snippet mc "Mathcal" w
+\mathcal{${1}}`!p
+if t[2] and t[2][0] not in [',','.','?','-',' ']:
+	snip.rv = ' '
+else:
+	snip.rv = ''
+`$2
+endsnippet
+
+context "math()"
+snippet mb "Mathbb" w
+\mathbb{${1}}`!p
+if t[2] and t[2][0] not in [',','.','?','-',' ']:
+	snip.rv = ' '
+else:
+	snip.rv = ''
+`$2
+endsnippet
+
+### Math Environment Snippets ###
+snippet mk "Math" wA
+$${1}$`!p
+if t[2] and t[2][0] not in [',','.','?','-',' ']:
+	snip.rv = ' '
+else:
+	snip.rv = ''
+`$2
+endsnippet
+
+snippet dm "Math" wA
+\[
+	$1
+\]
+$0
+endsnippet
+
+### Brackets and Stuff ###
+context "math()"
+snippet lrp "Parentheses" wA
+\left( $1 \right) $0
+endsnippet
+
+context "math()"
+snippet lrb "Brackets" wA
+\left[ $1 \right] $0
+endsnippet
+
+context "math()"
+snippet lrc "Curly Braces" wA
+\left\lbrace $1 \right\rbrace $0
+endsnippet
+
+context "math()"
+snippet lra "Absolute Value" wA
+\left| $1 \right| $0
+endsnippet
+
+### Superscripts and Subscripts ###
+context "math()"
+snippet '([A-Za-z])(\d)' "auto subscript" wrA
+`!p snip.rv = match.group(1)`_`!p snip.rv = match.group(2)`
+endsnippet
+
+context "math()"
+snippet '([A-Za-z])_(\d\d)' "auto subscript2" wrA
+`!p snip.rv = match.group(1)`_{`!p snip.rv = match.group(2)`}
+endsnippet
+
+context "math()"
+snippet sr "Squared" iA
+^{2}
+endsnippet
+
+context "math()"
+snippet cb "Cubed" iA
+^{3}
+endsnippet
+
+context "math()"
+snippet inv "Inverse" iA
+^{-1}
+endsnippet
+
+context "math()"
+snippet td "General superscript" iA
+^{$1} $0
+endsnippet
+
+### Fractions ###
+context "math()"
+snippet // "Fraction" iA
+\\frac{$1}{$2}$0
+endsnippet
+
+### Calculus ###
+context "math()"
+snippet lim "Limit" iA
+\\lim_{$1 \to $2} $0
+endsnippet
+
+context "math()"
+priority 10
+snippet int "Integral" iA
+\int $0
+endsnippet
+
+context "math()"
+priority 100
+snippet bint "Integral with Bounds" iA
+\int_{$1}^{$2} $0
+endsnippet
+
+context "math()"
+priority 100
+snippet dint "Integral with d" iA
+\int $2 d$1 $0
+endsnippet
+
+context "math()"
+priority 1000
+snippet '(bd|db)int' "Integral with bounds and d" riA
+\int_{$1}^{$2} $4 d$3 $0
+endsnippet
+
+context "math()"
+priority 10
+snippet der "Derivative" iA
+\\frac{d $1}{d $2}`!p
+if t[2] and t[2][0] not in [',','.','?','-',' ']:
+	snip.rv = ' '
+else:
+	snip.rv = ''
+`$3
+endsnippet
+
+context "math()"
+priority 100
+snippet pder "Partial derivative" iA
+\\frac{\partial $1}{\partial $2}`!p
+if t[2] and t[2][0] not in [',','.','?','-',' ']:
+	snip.rv = ' '
+else:
+	snip.rv = ''
+`$3
+endsnippet
+
+### Trig ###
+context "math()"
+snippet '(?<!\\)(sin|cos|tan|csc|sec|cot|ln|log|exp)' "Trig and special funcs" riA
+\\`!p snip.rv = match.group(1)`
+endsnippet
+
+### Special Characters ###
+context "math()"
+snippet ';([A-Za-z])' "Greek letters" riA
+`!p
+lets = {'a': r'\alpha', 'A': r'\Alpha',
+		'b': r'\beta', 'B': r'\Beta',
+		'g': r'\gamma', 'G': r'\Gamma',
+		'd': r'\delta', 'D': r'\Delta',
+		'e': r'\epsilon', 'E': r'\Epsilon',
+		'z': r'\zeta', 'Z': r'\Zeta',
+		'q': r'\eta', 'Q': r'\Eta',
+		'h': r'\theta', 'H': r'\Theta',
+		'i': r'\iota', 'I': r'\Iota',
+		'k': r'\kappa', 'K': r'\Kappa',
+		'l': r'\lambda', 'L': r'\Lambda',
+		'm': r'\mu', 'M': r'\Mu',
+		'n': r'\nu', 'N': r'\Nu',
+		'x': r'\xi', 'X': r'\Xi',
+		'o': r'\omicron', 'O': r'\Omicron',
+		'p': r'\pi', 'P': r'\Pi',
+		'r': r'\rho', 'R': r'\Rho',
+		's': r'\sigma', 'S': r'\Sigma',
+		't': r'\tau', 'T': r'\Tau',
+		'u': r'\upsilon', 'U': r'\Upsilon',
+		'f': r'\varphi', 'F': r'\Phi',
+		'c': r'\psi', 'C': r'\Psi',
+		'w': r'\omega', 'W': r'\Omega'}
+snip.rv = lets[match.group(1)]`
+endsnippet
+
+context "math()"
+snippet ',(to|mt|lt|gt)' "Special characters" riA
+`!p
+lets = {r'to': r'\to', r'mt': r'\mapsto', 'lt': '\leq', 'gt': '\geq'}
+snip.rv = lets[match.group(1)]` $0
+endsnippet
+
+### Ligatures ###
+context "math()"
+priority 10
+snippet "bar" "Bar" riA
+\overline{$1} $0
+endsnippet
+
+context "math()"
+priority 100
+snippet "(\\?\w+)bar" "Bar" riA
+\overline{`!p snip.rv=match.group(1)`} $0
+endsnippet
+
+context "math()"
+priority 10
+snippet "vec" "Vector" riA
+\vec{$1} $0
+endsnippet
+
+context "math()"
+priority 100
+snippet "(\\?\w+)vec" "Vector" riA
+\vec{`!p snip.rv=match.group(1)`} $0
+endsnippet
