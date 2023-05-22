@@ -311,7 +311,7 @@ exec_always --no-startup-id numlockx on
 exec_always --no-startup-id ~/.config/i3/scripts/display_setup.sh
 
 # set wallpaper
-exec --no-startup-id sleep 1 && feh --bg-fill /home/yewlkang/.config/resources/man_space.png
+exec --no-startup-id sleep 1 && feh --bg-fill ~/.config/resources/man_space.png
 
 # set powersavings for display:
 exec --no-startup-id xset s 480 dpms 600 600 600
